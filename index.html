@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 퀴즈 챌린지</title>
+    <style>
+        :root { --primary: #4A90E2; --correct: #27ae60; --wrong: #e74c3c; --bg: #f5f7fa; --card-bg: #ffffff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Pretendard', -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #333; }
+        
+        .app-container { background: var(--card-bg); width: 100%; max-width: 500px; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        
+        /* 헤더 */
+        .header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; background: white; sticky; top: 0; z-index: 10; }
+        .type-label { font-weight: 800; color: var(--primary); font-size: 1rem; }
+        .menu-btn { background: #f0f0f0; border: none; border-radius: 8px; cursor: pointer; padding: 8px 12px; font-weight: 600; font-size: 0.85rem; }
+
+        /* 상태바 */
+        .status-bar { padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; background: #fff; font-size: 0.9rem; border-bottom: 1px solid #f0f0f0; }
+        .progress-text { font-weight: 700; color: #666; }
+        .score-info { font-weight: 700; }
+        .count-o { color: var(--correct); margin-right: 10px; }
+        .count-x { color: var(--wrong); }
+
+        /* 문제 영역 */
+        .content { padding: 25px 20px; flex-grow: 1; overflow-y: auto; }
+        .question-text { font-size: 1.25rem; font-weight: 700; margin-bottom: 25px; line-height: 1.4; word-break: keep-all; }
+        
+        /* 선택지 */
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option-item { padding: 18px; border: 2px solid #f0f0f0; border-radius: 15px; cursor: pointer; text-align: left; transition: 0.2s; background: white; font-size: 1rem; position: relative; line-height: 1.3; }
+        .option-item.selected { border-color: var(--primary); background: #f0f7ff; }
+        .option-item.correct { border-color: var(--correct); background: #eafff2; color: #1a7d43; font-weight: 600; }
+        .option-item.wrong { border-color: var(--wrong); background: #fff2f2; color: #c0392b; }
+        
+        /* 해설 */
+        .explanation { font-size: 0.85rem; color: #555; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px; display: none; }
+        .reviewed .explanation { display: block; }
+
+        /* 하단 컨트롤 */
+        .controls { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: white; border-top: 1px solid #eee; }
+        .btn { padding: 16px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; font-size: 1rem; transition: 0.2s; -webkit-appearance: none; }
+        .btn-check { grid-column: span 2; background: #e0e0e0; color: #999; pointer-events: none; }
+        .btn-check.active { background: var(--primary); color: white; pointer-events: auto; box-shadow: 0 4px 12px rgba(74,144,226,0.3); }
+        .btn-prev { background: #f0f0f0; color: #666; }
+        .btn-next { background: var(--primary); color: white; }
+        
+        /* 유형 선택 모달 */
+        .modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 100; padding: 40px 20px; display: flex; flex-direction: column; }
+        .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 30px; text-align: center; }
+        .type-grid { display: grid; gap: 15px; }
+        .type-item { padding: 20px; background: #f8f9fa; border-radius: 15px; text-align: center; font-weight: 700; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .type-item:active { transform: scale(0.98); background: #f0f7ff; border-color: var(--primary); }
+
+        .hint-btn { color: var(--primary); font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 15px; display: inline-block; padding: 5px 10px; background: #f0f7ff; border-radius: 5px; }
+
+        /* 애니메이션 */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .content { animation: fadeIn 0.3s ease-out; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- 유형 선택 모달 (처음 실행 시 표시) -->
+    <div id="type-modal" class="modal">
+        <div class="modal-title">학습 유형 선택</div>
+        <div class="type-grid">
+            <div class="type-item" onclick="loadQuiz('type_concept.csv', '개념 이해형')">💡 개념 이해형</div>
+            <div class="type-item" onclick="loadQuiz('type_technical.csv', '기술 실무')">⚙️ 기술 실무</div>
+            <div class="type-item" onclick="loadQuiz('type_solving.csv', '문제 해결')">🧩 문제 해결</div>
+            <div class="type-item" onclick="loadQuiz('type_ethics.csv', '윤리/저작권')">⚖️ 윤리/저작권</div>
+            <div class="type-item" onclick="loadQuiz('type_planning.csv', '프로젝트 기획')">📝 프로젝트 기획</div>
+            <div class="type-item" onclick="loadQuiz('type_prompt.csv', '프롬프트 전략')">💬 프롬프트 전략</div>
+        </div>
+    </div>
+
+    <div class="header"> 
+        <span class="type-label" id="type-text">유형 선택 필요</span>
+        <button class="menu-btn" onclick="showTypeModal()">유형변경</button>
+    </div>
+    
+    <div class="status-bar">
+        <span class="progress-text" id="progress-text">0 / 0</span>
+        <div class="score-info">
+            <span class="count-o">✓ <span id="correct-cnt">0</span></span>
+            <span class="count-x">✕ <span id="wrong-cnt">0</span></span>
+        </div>
+    </div>
+
+    <div class="content" id="main-content">
+        <div class="question-text" id="q-text">유형을 선택해 주세요.</div>
+        <div class="options" id="options-box"></div>
+        <div id="hint-area"></div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-check" id="check-btn" onclick="confirmAnswer()">정답 확인</button>
+        <button class="btn btn-prev" id="prev-btn" onclick="changeQ(-1)" style="display:none;">이전</button>
+        <button class="btn btn-next" id="next-btn" onclick="changeQ(1)" style="display:none;">다음</button>
+    </div>
+</div>
+
+<script>
+    let questions = [];
+    let curIdx = 0;
+
+    function showTypeModal() {
+        document.getElementById('type-modal').style.display = 'flex';
+    }
+
+    async function loadQuiz(fileName, typeName) {
+        try {
+            const response = await fetch(`quiz_data/${fileName}`);
+            const text = await response.text();
+            parseCSV(text);
+            document.getElementById('type-text').innerText = typeName;
+            document.getElementById('type-modal').style.display = 'none';
+        } catch (error) {
+            console.error('CSV 로드 실패:', error);
+            alert('데이터를 불러오지 못했습니다. 파일 경로를 확인하세요.');
+        }
+    }
+
+    function parseCSV(text) {
+        const lines = text.trim().split("\n");
+        questions = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].split(",");
+            if (row.length < 13) continue;
+
+            questions.push({
+                id: row[0],
+                type: row[1],
+                q: row[2].replace(/"/g, ''),
+                opts: [row[3], row[4], row[5], row[6]],
+                ans: parseInt(row[7]),
+                hint: row[8],
+                exps: [row[9], row[10], row[11], row[12]],
+                userAnswer: null, // 사용자가 선택한 인덱스
+                isConfirmed: false // 확인 버튼을 눌렀는지 여부
+            });
+        }
+        
+        if (questions.length > 0) {
+            curIdx = 0;
+            render();
+        }
+    }
+
+    function updateScore() {
+        let correct = 0;
+        let wrong = 0;
+        questions.forEach(q => {
+            if (q.isConfirmed) {
+                if (q.userAnswer === q.ans) correct++;
+                else wrong++;
+            }
+        });
+        document.getElementById('correct-cnt').innerText = correct;
+        document.getElementById('wrong-cnt').innerText = wrong;
+    }
+
+    function render() {
+        const q = questions[curIdx];
+        const qTextEl = document.getElementById('q-text');
+        const box = document.getElementById('options-box');
+        const checkBtn = document.getElementById('check-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const hintArea = document.getElementById('hint-area');
+
+        // 스크롤 상단으로
+        document.getElementById('main-content').scrollTop = 0;
+
+        // 텍스트 및 상태 업데이트
+        document.getElementById('progress-text').innerText = `${curIdx + 1} / ${questions.length}`;
+        qTextEl.innerText = q.q;
+        updateScore();
+
+        // 버튼 가시성 제어
+        prevBtn.style.display = curIdx > 0 ? 'block' : 'none';
+        nextBtn.style.display = curIdx < questions.length - 1 ? 'block' : 'none';
+
+        // 옵션박스 생성
+        box.innerHTML = '';
+        q.opts.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            if (q.userAnswer === i) div.classList.add('selected');
+            
+            // 이미 확인한 문제인 경우 결과 표시
+            if (q.isConfirmed) {
+                div.classList.add('reviewed');
+                if (i === q.ans) div.classList.add('correct');
+                else if (q.userAnswer === i) div.classList.add('wrong');
+            }
+
+            div.innerHTML = `<strong>${String.fromCharCode(65+i)}.</strong> ${opt} <div class="explanation">${q.exps[i]}</div>`;
+            div.onclick = () => selectOption(i);
+            box.appendChild(div);
+        });
+
+        // 힌트 버튼 제어
+        hintArea.innerHTML = q.isConfirmed ? '' : `<div class="hint-btn" onclick="alert('💡 힌트: ' + questions[curIdx].hint)">힌트 보기</div>`;
+
+        // 확인 버튼 상태 제어
+        if (q.isConfirmed) {
+            checkBtn.style.display = 'none';
+        } else {
+            checkBtn.style.display = 'block';
+            checkBtn.className = q.userAnswer !== null ? 'btn btn-check active' : 'btn btn-check';
+        }
+    }
+
+    function selectOption(idx) {
+        if (questions[curIdx].isConfirmed) return;
+        questions[curIdx].userAnswer = idx;
+        render();
+    }
+
+    function confirmAnswer() {
+        const q = questions[curIdx];
+        if (q.userAnswer === null || q.isConfirmed) return;
+        q.isConfirmed = true;
+        render();
+    }
+
+    function changeQ(dir) {
+        curIdx += dir;
+        render();
+    }
+</script>
+</body>
+</html>
