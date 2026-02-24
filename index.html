@@ -211,7 +211,21 @@
                 else if (q.userAnswer === i) div.classList.add('wrong');
             }
 
-            div.innerHTML = `<strong>${String.fromCharCode(65+i)}.</strong> ${opt} <div class="explanation">${q.exps[i]}</div>`;
+            // HTML 태그가 포함된 보기를 안전하게 표시하기 위해 텍스트 노드 사용
+            const label = document.createElement('strong');
+            label.innerText = `${String.fromCharCode(65+i)}. `;
+            
+            const textSpan = document.createElement('span');
+            textSpan.textContent = opt; // <head> 등을 문자로 안전하게 삽입
+            
+            const expDiv = document.createElement('div');
+            expDiv.className = 'explanation';
+            expDiv.textContent = `- ${q.exps[i]}`;
+
+            div.appendChild(label);
+            div.appendChild(textSpan);
+            div.appendChild(expDiv);
+            
             div.onclick = () => selectOption(i);
             box.appendChild(div);
         });
