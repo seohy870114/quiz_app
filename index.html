@@ -66,13 +66,26 @@
     <!-- 유형 선택 모달 (처음 실행 시 표시) -->
     <div id="type-modal" class="modal">
         <div class="modal-title">학습 유형 선택</div>
-        <div class="type-grid">
+        
+        <div style="margin-bottom: 10px; font-weight: 800; color: #666; font-size: 0.9rem;">[ 기존 학습 데이터 ]</div>
+        <div class="type-grid" style="margin-bottom: 25px;">
             <div class="type-item" onclick="loadQuiz('type_concept.csv', '개념 이해형')">💡 개념 이해형</div>
             <div class="type-item" onclick="loadQuiz('type_technical.csv', '기술 실무')">⚙️ 기술 실무</div>
             <div class="type-item" onclick="loadQuiz('type_solving.csv', '문제 해결')">🧩 문제 해결</div>
             <div class="type-item" onclick="loadQuiz('type_ethics.csv', '윤리/저작권')">⚖️ 윤리/저작권</div>
             <div class="type-item" onclick="loadQuiz('type_planning.csv', '프로젝트 기획')">📝 프로젝트 기획</div>
             <div class="type-item" onclick="loadQuiz('type_prompt.csv', '프롬프트 전략')">💬 프롬프트 전략</div>
+        </div>
+
+        <div style="margin-bottom: 10px; font-weight: 800; color: var(--primary); font-size: 0.9rem;">[ 2026 신규 문제은행 ]</div>
+        <div class="type-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_01_concept.csv', '2026: AI 기초')">1. AI 기초</div>
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_02_vibe.csv', '2026: 바이브코딩')">2. 바이브코딩</div>
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_03_web.csv', '2026: 웹 기초')">3. 웹 기초</div>
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_04_prompt.csv', '2026: 프롬프트')">4. 프롬프트</div>
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_05_shortform.csv', '2026: 숏폼기획')">5. 숏폼기획</div>
+            <div class="type-item" style="padding: 12px; font-size: 0.9rem;" onclick="loadQuiz('bank_06_ethics.csv', '2026: 윤리저작권')">6. 윤리저작권</div>
+            <div class="type-item" style="grid-column: span 2; padding: 12px; font-size: 0.9rem; background: #fff5f5; border-color: #ffcfcf;" onclick="loadQuiz('bank_07_html.csv', '2026: HTML 심화')">🌐 HTML 심화 (50문항)</div>
         </div>
     </div>
 
